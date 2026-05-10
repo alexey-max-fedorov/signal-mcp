@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "signal-mcp",
-      "source": ".",
+      "source": "./",
       "description": "Signal messaging via signal-cli — MCP server (send, receive, reactions, typing, receipts, contacts, groups) and skills covering install, registration/linking, and messaging patterns.",
       "version": "0.1.0",
       "category": "messaging",
