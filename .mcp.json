@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "signal-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--quiet",
+        "--script",
+        "${CLAUDE_PLUGIN_ROOT}/mcp/signal-mcp/server.py"
+      ],
+      "env": {
+        "SIGNAL_ACCOUNT": "${SIGNAL_ACCOUNT}",
+        "SIGNAL_CLI_BIN": "${SIGNAL_CLI_BIN}"
+      }
+    }
+  }
+}

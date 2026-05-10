@@ -1,0 +1,28 @@
+{
+  "name": "signal-mcp",
+  "owner": {
+    "name": "Alexey Fedorov",
+    "email": "alexey.max.fedorov@gmail.com",
+    "url": "https://github.com/alexey-max-fedorov"
+  },
+  "metadata": {
+    "description": "Signal Messenger plugin for Claude Code. Bundles an MCP server that wraps signal-cli plus skills for installing it and using it well.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "signal-mcp",
+      "source": ".",
+      "description": "Signal messaging via signal-cli — MCP server (send, receive, reactions, typing, receipts, contacts, groups) and skills covering install, registration/linking, and messaging patterns.",
+      "version": "0.1.0",
+      "category": "messaging",
+      "keywords": ["signal", "messaging", "signal-cli", "mcp", "chat"],
+      "license": "Signal MCP License (noncommercial)",
+      "homepage": "https://github.com/alexey-max-fedorov/signal-mcp",
+      "author": {
+        "name": "Alexey Fedorov",
+        "email": "alexey.max.fedorov@gmail.com"
+      }
+    }
+  ]
+}

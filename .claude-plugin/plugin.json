@@ -1,0 +1,13 @@
+{
+  "name": "signal-mcp",
+  "version": "0.1.0",
+  "description": "Send and receive Signal messages via signal-cli — MCP server plus setup and messaging-pattern skills.",
+  "author": {
+    "name": "Alexey Fedorov",
+    "email": "alexey.max.fedorov@gmail.com"
+  },
+  "homepage": "https://github.com/alexey-max-fedorov/signal-mcp",
+  "repository": "https://github.com/alexey-max-fedorov/signal-mcp",
+  "license": "Signal MCP License (noncommercial)",
+  "keywords": ["signal", "messaging", "signal-cli", "mcp", "chat"]
+}
