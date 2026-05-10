@@ -37,7 +37,7 @@ Set in your shell profile and restart Claude Code so the MCP server picks them u
 
 ## Tools exposed
 
-The MCP server registers these tools (prefixed `mcp__plugin_signal-mcp_signal-mcp__` in Claude Code):
+The MCP server registers these tools (Claude Code prefixes them; see them in `/mcp` after install):
 
 | Tool | Purpose |
 |---|---|
@@ -90,9 +90,15 @@ Both skills include reference docs (install per platform, registration, linking,
 └── README.md
 ```
 
-## Privacy
+## Privacy & trust
 
 End-to-end encryption is enforced by Signal itself; this plugin doesn't change that. The MCP server runs locally, talks to signal-cli locally, and signal-cli talks to Signal's servers directly. No third party sees message content. Logs and data live under `~/.local/share/signal-cli/`.
+
+A few things to keep in mind when wiring this up to an autonomous assistant:
+
+- **`signal_send` can attach any local file readable by the user**. A prompt-injected agent could exfiltrate `~/.ssh/id_rsa` or similar via a Signal attachment. Restrict tool permissions in Claude Code (`/permissions`) accordingly, and require human-in-the-loop confirmation for `signal_send` if running autonomously.
+- **Tool error messages may include phone numbers, UUIDs, and group IDs** as signal-cli's stderr. Treat conversation transcripts as containing PII when sharing for debugging.
+- **The plugin trusts the host environment.** `SIGNAL_CLI_BIN` overrides which binary runs; don't set it to anything you don't trust.
 
 ## License
 

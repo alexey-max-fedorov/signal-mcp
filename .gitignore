@@ -7,3 +7,10 @@ __pycache__/
 .DS_Store
 *.log
 .uv/
+.idea/
+.vscode/
+*.swp
+*.swo
+*.qr
+*.qr.png
+signal-cli-data/

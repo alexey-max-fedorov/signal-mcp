@@ -102,7 +102,7 @@ def _recipient_args(
     if username:
         return ["-u", username]
     if phone:
-        return [phone]
+        return ["--", phone]
     raise SignalCliError(
         "Specify exactly one recipient: phone, username, group_id, or note_to_self."
     )
@@ -221,9 +221,10 @@ def signal_receive(timeout_seconds: float = 5.0, max_messages: int | None = None
     Decryption errors surface as envelopes with an `error` field; they're usually
     transient prekey-state issues and the affected message is unrecoverable.
     """
+    timeout_seconds = max(0.0, float(timeout_seconds))
     args = ["receive", "--timeout", str(timeout_seconds)]
     if max_messages is not None:
-        args += ["--max-messages", str(max_messages)]
+        args += ["--max-messages", str(max(1, int(max_messages)))]
     out = _run(args, json_output=True, timeout=timeout_seconds + 30)
     envelopes = _parse_json_lines(out)
     return {"count": len(envelopes), "envelopes": envelopes}
@@ -233,22 +234,21 @@ def signal_receive(timeout_seconds: float = 5.0, max_messages: int | None = None
 def signal_send_typing(
     stop: bool = False,
     phone: str | None = None,
-    username: str | None = None,
     group_id: str | None = None,
 ) -> dict[str, Any]:
     """Send a typing-started (or typing-stopped) indicator.
 
     Pair with signal_send: send typing, wait a realistic interval, send the message,
     then call again with `stop=True` (or just send the message — clients usually clear
-    the indicator on receive). NOTE: signal-cli's sendTyping does not accept usernames
-    directly; for username-only contacts, look up their UUID via signal_list_contacts
-    and pass it as `phone`.
+    the indicator on receive). signal-cli's sendTyping does not accept usernames; for
+    username-only contacts, call signal_list_contacts to find the UUID and pass it as
+    `phone`.
     """
     args = ["sendTyping"]
     if stop:
         args.append("--stop")
     args += _recipient_args(
-        phone=phone, username=username, group_id=group_id, note_to_self=False
+        phone=phone, username=None, group_id=group_id, note_to_self=False
     )
     _run(args)
     return {"ok": True, "stopped": stop}
@@ -269,8 +269,8 @@ def signal_send_receipt(
     if not target_timestamps:
         raise SignalCliError("target_timestamps must not be empty")
     args = ["sendReceipt", "--type", receipt_type, "-t"]
-    args += [str(ts) for ts in target_timestamps]
-    args.append(recipient)
+    args += [str(int(ts)) for ts in target_timestamps]
+    args += ["--", recipient]
     _run(args)
     return {"ok": True, "type": receipt_type, "count": len(target_timestamps)}
 
@@ -322,33 +322,6 @@ def signal_remote_delete(
     return {"ok": True}
 
 
-_CONTACT_FIELDS = (
-    ("number", "Number:"),
-    ("aci", "ACI:"),
-    ("name", "Name:"),
-    ("profile_name", "Profile name:"),
-    ("username", "Username:"),
-    ("color", "Color:"),
-    ("blocked", "Blocked:"),
-    ("message_expiration", "Message expiration:"),
-)
-
-
-def _parse_contact_line(line: str) -> dict[str, Any]:
-    contact: dict[str, Any] = {"raw": line}
-    indices: list[tuple[int, str, str]] = []
-    for key, label in _CONTACT_FIELDS:
-        idx = line.find(label)
-        if idx != -1:
-            indices.append((idx, key, label))
-    indices.sort()
-    for i, (start, key, label) in enumerate(indices):
-        end = indices[i + 1][0] if i + 1 < len(indices) else len(line)
-        value = line[start + len(label):end].strip()
-        contact[key] = value or None
-    return contact
-
-
 @mcp.tool()
 def signal_list_contacts() -> list[dict[str, Any]]:
     """List known contacts on this account.
@@ -356,14 +329,11 @@ def signal_list_contacts() -> list[dict[str, Any]]:
     Returns each contact's phone number, UUID, profile name, and username if known.
     Username-only contacts will have no phone — use the UUID for sendTyping/sendReceipt.
     """
-    out = _run(["listContacts"], timeout=20)
-    contacts: list[dict[str, Any]] = []
-    for line in out.splitlines():
-        line = line.strip()
-        if not line.startswith("Number:"):
-            continue
-        contacts.append(_parse_contact_line(line))
-    return contacts
+    out = _run(["listContacts"], json_output=True, timeout=20)
+    parsed = _parse_json_lines(out)
+    if len(parsed) == 1 and isinstance(parsed[0], list):
+        return parsed[0]
+    return parsed
 
 
 @mcp.tool()
@@ -398,14 +368,15 @@ def signal_get_user_status(
     Returns a list of {recipient, number/username, uuid, isRegistered}. Useful before
     attempting to send: unregistered numbers fail with an "Unregistered user" error.
     """
+    if not phones and not usernames:
+        raise SignalCliError("Provide at least one phone or username to look up.")
     args = ["getUserStatus"]
     if usernames:
         args.append("--username")
         args.extend(usernames)
     if phones:
+        args.append("--")
         args.extend(phones)
-    if not phones and not usernames:
-        raise SignalCliError("Provide at least one phone or username to look up.")
     out = _run(args, json_output=True, timeout=30)
     parsed = _parse_json_lines(out)
     if len(parsed) == 1 and isinstance(parsed[0], list):
@@ -476,7 +447,7 @@ def signal_block(
     if group_id:
         args += ["-g", group_id]
     elif phone:
-        args.append(phone)
+        args += ["--", phone]
     else:
         raise SignalCliError("Provide either phone or group_id.")
     _run(args)
@@ -493,7 +464,7 @@ def signal_unblock(
     if group_id:
         args += ["-g", group_id]
     elif phone:
-        args.append(phone)
+        args += ["--", phone]
     else:
         raise SignalCliError("Provide either phone or group_id.")
     _run(args)
